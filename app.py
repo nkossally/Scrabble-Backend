@@ -1,4 +1,3 @@
-import time
 import pickle
 from flask import Flask, request
 from board import ScrabbleBoard
@@ -124,6 +123,10 @@ def build_dawg(lexicon):
     print(len(minimized_nodes))
     return root
 
+@app.route('/')
+def get_home():
+    return 'homepage'
+
 @app.route('/start')
 def start_game():
     # build dawg
@@ -132,7 +135,7 @@ def start_game():
     text_file.close()
     build_trie(big_list)
     root = build_dawg(big_list)
-    file_handler = open("lexicon/scrabble_words_complete.pickle", "wb")
+    file_handler = open("temp/scrabble_words_complete.pickle", "wb")
     pickle.dump(root, file_handler)
     file_handler.close()
 
@@ -141,7 +144,7 @@ def start_game():
     player_hand = game.get_player_hand()
     tiles = game.get_tiles()
 
-    file_handler = open("lexicon/game.pickle", "wb")
+    file_handler = open("temp/game.pickle", "wb")
     pickle.dump(game, file_handler)
     file_handler.close()
 
@@ -149,11 +152,11 @@ def start_game():
 
 @app.route('/get-computer-first-move')
 def computer_make_start_move():
-    to_load = open("lexicon/game.pickle", "rb")
+    to_load = open("temp/game.pickle", "rb")
     game = pickle.load(to_load)
     to_load.close()
     result = game.get_start_move()
-    file_handler = open("lexicon/game.pickle", "wb")
+    file_handler = open("temp/game.pickle", "wb")
     pickle.dump(game, file_handler)
     file_handler.close()
     game.print_board()
@@ -161,11 +164,11 @@ def computer_make_start_move():
 
 @app.route('/get-best-move')
 def get_best_move():
-    to_load = open("lexicon/game.pickle", "rb")
+    to_load = open("temp/game.pickle", "rb")
     game = pickle.load(to_load)
     to_load.close()
     result = game.get_best_move()
-    file_handler = open("lexicon/game.pickle", "wb")
+    file_handler = open("temp/game.pickle", "wb")
     pickle.dump(game, file_handler)
     file_handler.close()
     game.print_board()
@@ -173,7 +176,7 @@ def get_best_move():
 
 @app.route('/get-tiles')
 def get_tiles():
-    to_load = open("lexicon/game.pickle", "rb")
+    to_load = open("temp/game.pickle", "rb")
     game = pickle.load(to_load)
     to_load.close()
     result = game.get_tiles()
@@ -181,7 +184,7 @@ def get_tiles():
 
 @app.route('/get-computer-hand')
 def get_computer_hand():
-    to_load = open("lexicon/game.pickle", "rb")
+    to_load = open("temp/game.pickle", "rb")
     game = pickle.load(to_load)
     to_load.close()
     result = game.get_computer_hand()
@@ -189,7 +192,7 @@ def get_computer_hand():
 
 @app.route('/get-player-hand')
 def get_player_hand():
-    to_load = open("lexicon/game.pickle", "rb")
+    to_load = open("temp/game.pickle", "rb")
     game = pickle.load(to_load)
     to_load.close()
     result = game.get_player_hand()
@@ -197,7 +200,7 @@ def get_player_hand():
 
 @app.route('/insert-letters', methods = ['POST'])
 def insert_tiles():
-    to_load = open("lexicon/game.pickle", "rb")
+    to_load = open("temp/game.pickle", "rb")
     game = pickle.load(to_load)
     to_load.close()
 
@@ -205,7 +208,7 @@ def insert_tiles():
     tiles = request_data['letters_and_coordinates']
     result = game.insert_letters(tiles)
     game.print_board()
-    file_handler = open("lexicon/game.pickle", "wb")
+    file_handler = open("temp/game.pickle", "wb")
     pickle.dump(game, file_handler)
     file_handler.close()
 
@@ -213,7 +216,7 @@ def insert_tiles():
 
 @app.route('/dump-letters', methods = ['POST'])
 def dump_letters():
-    to_load = open("lexicon/game.pickle", "rb")
+    to_load = open("temp/game.pickle", "rb")
     game = pickle.load(to_load)
     to_load.close()
 
@@ -222,7 +225,7 @@ def dump_letters():
     result = game.dump_letters(letters)
     game.print_board()
     print(result)
-    file_handler = open("lexicon/game.pickle", "wb")
+    file_handler = open("temp/game.pickle", "wb")
     pickle.dump(game, file_handler)
     file_handler.close()
 
