@@ -378,6 +378,15 @@ class ScrabbleBoard:
         return {'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag}
 
 
+    def dump_letters(self, letters):
+        word_rack = self.player_word_rack
+        [word_rack.remove(letter) for letter in letters]
+        [self.tile_bag.append(letter) for letter in letters]
+        word_rack, new_letters = refill_word_rack(word_rack, self.tile_bag)
+        [self.tile_bag.remove(letter) for letter in new_letters]
+        self.player_word_rack = word_rack
+        return {'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag}
+
     # method to insert words into board by row and column number
     # using 1-based indexing for user input
     def insert_word(self, row, col, word):
@@ -472,6 +481,7 @@ class ScrabbleBoard:
     # scan all tiles on board in both transposed and non-transposed state, find best move
     def get_best_move(self):
 
+        old_computer_word_rack = self.computer_word_rack.copy()
         word_rack = self.computer_word_rack
 
         # clear out cross-check lists before adding new words
@@ -532,11 +542,12 @@ class ScrabbleBoard:
         col = self.best_col - self.dist_from_anchor if not transposed else self.best_row
         row = self.best_row if not transposed else self.best_col - self.dist_from_anchor
 
-        return {'word': self.best_word, 'computer_word_rack': self.computer_word_rack,'tile_bag': self.tile_bag, 'row': row, 'col': col, 'used_letters': self.letters_from_rack, 'is_vertical': transposed }
+        return {'word': self.best_word, 'computer_word_rack': self.computer_word_rack,'tile_bag': self.tile_bag, 'row': row, 'col': col, 'used_letters': self.letters_from_rack, 'is_vertical': transposed, 'old_computer_word_rack': old_computer_word_rack }
 
     def get_start_move(self):
         # board symmetrical at start so just always play the start move horizontally
         # try every letter in rack as possible anchor square
+        old_computer_word_rack = self.computer_word_rack.copy()
         word_rack = self.computer_word_rack
         self.best_row = 7
         self.best_col = 8
@@ -562,7 +573,7 @@ class ScrabbleBoard:
 
         print({'computer_word_rack': self.computer_word_rack, 'tile_bag': self.tile_bag, 'row': self.best_row, 'col': self.best_col - self.dist_from_anchor, 'word': self.best_word})
 
-        return {'computer_word_rack': self.computer_word_rack, 'tile_bag': self.tile_bag, 'row': self.best_row, 'col': self.best_col - self.dist_from_anchor, 'word': self.best_word}
+        return {'computer_word_rack': self.computer_word_rack, 'old_computer_word_rack': old_computer_word_rack, 'tile_bag': self.tile_bag, 'row': self.best_row, 'col': self.best_col - self.dist_from_anchor, 'word': self.best_word}
 
 
 # returns a list of all words played on the board
@@ -601,47 +612,4 @@ def refill_word_rack(rack, tile_bag):
     new_letters = random.sample(tile_bag, to_add)
     rack = rack + new_letters
     return rack, new_letters
-
-
-def play_game():
-    score = 0
-    tile_bag = ["A"] * 9 + ["B"] * 2 + ["C"] * 2 + ["D"] * 4 + ["E"] * 12 + ["F"] * 2 + ["G"] * 3 + \
-               ["H"] * 2 + ["I"] * 9 + ["J"] * 1 + ["K"] * 1 + ["L"] * 4 + ["M"] * 2 + ["N"] * 6 + \
-               ["O"] * 8 + ["P"] * 2 + ["Q"] * 1 + ["R"] * 6 + ["S"] * 4 + ["T"] * 6 + ["U"] * 4 + \
-               ["V"] * 2 + ["W"] * 2 + ["X"] * 1 + ["Y"] * 2 + ["Z"] * 1
-
-    to_load = open("lexicon/scrabble_words_complete.pickle", "rb")
-    root = pickle.load(to_load)
-    to_load.close()
-    word_rack = random.sample(tile_bag, 7)
-    [tile_bag.remove(letter) for letter in word_rack]
-    game = ScrabbleBoard(root)
-    word_rack = game.get_start_move()
-    score += game.highest_score
-    word_rack, new_letters = refill_word_rack(word_rack, tile_bag)
-    [tile_bag.remove(letter) for letter in new_letters]
-
-    play = True
-    while play:
-        word_rack = game.get_best_move()
-        score += game.highest_score
-        word_rack, new_letters = refill_word_rack(word_rack, tile_bag)
-        [tile_bag.remove(letter) for letter in new_letters]
-        if game.best_word == "":
-            # draw new hand if can't find any words
-            if len(tile_bag) >= 7:
-                return_to_bag_words = word_rack.copy()
-                word_rack, new_letters = refill_word_rack([], tile_bag)
-                [tile_bag.remove(letter) for letter in new_letters]
-
-            else:
-                play = False
-                for word in all_board_words(game.board):
-                    if not find_in_dawg(word, root) and word:
-                        game.print_board()
-                        raise Exception(f"Invalid word on board: {word}")
-
-    # game.print_board()
-
-    return score
 

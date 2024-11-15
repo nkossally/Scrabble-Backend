@@ -210,3 +210,20 @@ def insert_tiles():
     file_handler.close()
 
     return result
+
+@app.route('/dump-letters', methods = ['POST'])
+def dump_letters():
+    to_load = open("lexicon/game.pickle", "rb")
+    game = pickle.load(to_load)
+    to_load.close()
+
+    request_data = request.get_json()
+    letters = request_data['letters']
+    result = game.dump_letters(letters)
+    game.print_board()
+    print(result)
+    file_handler = open("lexicon/game.pickle", "wb")
+    pickle.dump(game, file_handler)
+    file_handler.close()
+
+    return result
