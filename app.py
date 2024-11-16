@@ -128,50 +128,6 @@ def build_dawg(lexicon):
 def get_home():
     return 'homepage'
 
-# @app.route('/test-set-redis-data')
-# def test_set_redis():
-#     r = redis.Redis(
-#         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-#         port=14591,
-#         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-#     r.set('pizza', 'pie')
-#     return {'hey': "set dawg"}
-
-# @app.route('/test-get-redis-data')
-# def test_get_redis():
-#     r = redis.Redis(
-#         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-#         port=14591,
-#         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-#     dawg = (r.get('pizza'))
-#     print(dawg)
-#     return {'hey': 'got dawg'}
-
-@app.route('/test-set-redis-data')
-def test_set_redis():
-    r = redis.Redis(
-        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-        port=14591,
-        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-    text_file = open("lexicon/scrabble_words_complete.txt", "r")
-    big_list = text_file.read().splitlines()
-    text_file.close()
-    build_trie(big_list)
-    root = build_dawg(big_list)
-    pickled_root = pickle.dumps(root)
-    r.set('dawg', pickled_root)
-    return {'hey': 'set dawg'}
-
-@app.route('/test-get-redis-data')
-def test_get_redis():
-    r = redis.Redis(
-        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-        port=14591,
-        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-    dawg = pickle.loads(r.get('dawg'))
-    return {'hey': "got dawg"}
- 
-
 @app.route('/start')
 def start_game():
     # build dawg
@@ -184,8 +140,6 @@ def start_game():
     text_file.close()
     build_trie(big_list)
     root = build_dawg(big_list)
-    pickled_root = pickle.dumps(root)
-    r.set('dawg', pickled_root)
 
     game = ScrabbleBoard(root)
     computer_hand = game.get_computer_hand()
