@@ -1,4 +1,3 @@
-from dawg import *
 import regex as re
 import random
 import copy
