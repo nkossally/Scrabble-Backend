@@ -380,10 +380,11 @@ class ScrabbleBoard:
 
     def dump_letters(self, letters):
         word_rack = self.player_word_rack
-        [word_rack.remove(letter) for letter in letters]
+        renove_items_from_list(word_rack, letters)
         [self.tile_bag.append(letter) for letter in letters]
         word_rack, new_letters = refill_word_rack(word_rack, self.tile_bag)
         [self.tile_bag.remove(letter) for letter in new_letters]
+        renove_items_from_list(self.tile_bag, new_letters)
         self.player_word_rack = word_rack
         return {'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag}
 
@@ -612,4 +613,9 @@ def refill_word_rack(rack, tile_bag):
     new_letters = random.sample(tile_bag, to_add)
     rack = rack + new_letters
     return rack, new_letters
+
+def renove_items_from_list(list_1, list_2):
+    for item in list_2:
+        if item in list_1:
+            list_1.remove(item)
 
