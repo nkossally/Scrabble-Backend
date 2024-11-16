@@ -1,4 +1,5 @@
 import pickle
+import redis
 from flask import Flask, request
 from board import ScrabbleBoard
 import random
@@ -127,106 +128,141 @@ def build_dawg(lexicon):
 def get_home():
     return 'homepage'
 
-@app.route('/start')
-def start_game():
-    # build dawg
+# @app.route('/test-set-redis-data')
+# def test_set_redis():
+#     r = redis.Redis(
+#         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+#         port=14591,
+#         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+#     r.set('pizza', 'pie')
+#     return {'hey': "set dawg"}
+
+# @app.route('/test-get-redis-data')
+# def test_get_redis():
+#     r = redis.Redis(
+#         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+#         port=14591,
+#         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+#     dawg = (r.get('pizza'))
+#     print(dawg)
+#     return {'hey': 'got dawg'}
+
+@app.route('/test-set-redis-data')
+def test_set_redis():
+    r = redis.Redis(
+        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+        port=14591,
+        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
     text_file = open("lexicon/scrabble_words_complete.txt", "r")
     big_list = text_file.read().splitlines()
     text_file.close()
     build_trie(big_list)
     root = build_dawg(big_list)
-    file_handler = open("temp/scrabble_words_complete.pickle", "wb")
-    pickle.dump(root, file_handler)
-    file_handler.close()
+    pickled_root = pickle.dumps(root)
+    r.set('dawg', pickled_root)
+    return {'hey': 'set dawg'}
+
+@app.route('/test-get-redis-data')
+def test_get_redis():
+    r = redis.Redis(
+        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+        port=14591,
+        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+    dawg = pickle.loads(r.get('dawg'))
+    return {'hey': "got dawg"}
+ 
+
+@app.route('/start')
+def start_game():
+    # build dawg
+    r = redis.Redis(
+        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+        port=14591,
+        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+    text_file = open("lexicon/scrabble_words_complete.txt", "r")
+    big_list = text_file.read().splitlines()
+    text_file.close()
+    build_trie(big_list)
+    root = build_dawg(big_list)
+    pickled_root = pickle.dumps(root)
+    r.set('dawg', pickled_root)
 
     game = ScrabbleBoard(root)
     computer_hand = game.get_computer_hand()
     player_hand = game.get_player_hand()
     tiles = game.get_tiles()
 
-    file_handler = open("temp/game.pickle", "wb")
-    pickle.dump(game, file_handler)
-    file_handler.close()
+    pickled_game = pickle.dumps(game)
+    r.set('game', pickled_game)
 
     return {'player_hand': player_hand, 'computer_hand': computer_hand, 'tiles': tiles}
 
 @app.route('/get-computer-first-move')
 def computer_make_start_move():
-    to_load = open("temp/game.pickle", "rb")
-    game = pickle.load(to_load)
-    to_load.close()
+    r = redis.Redis(
+        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+        port=14591,
+        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+    game = pickle.loads(r.get('game'))
+
     result = game.get_start_move()
-    file_handler = open("temp/game.pickle", "wb")
-    pickle.dump(game, file_handler)
-    file_handler.close()
+   
+    pickled_game = pickle.dumps(game)
+    r.set('game', pickled_game)
+
     game.print_board()
     return result
 
 @app.route('/get-best-move')
 def get_best_move():
-    to_load = open("temp/game.pickle", "rb")
-    game = pickle.load(to_load)
-    to_load.close()
+    r = redis.Redis(
+        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+        port=14591,
+        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+    game = pickle.loads(r.get('game'))
+
     result = game.get_best_move()
-    file_handler = open("temp/game.pickle", "wb")
-    pickle.dump(game, file_handler)
-    file_handler.close()
+
+    pickled_game = pickle.dumps(game)
+    r.set('game', pickled_game)
+
     game.print_board()
     return result
 
-@app.route('/get-tiles')
-def get_tiles():
-    to_load = open("temp/game.pickle", "rb")
-    game = pickle.load(to_load)
-    to_load.close()
-    result = game.get_tiles()
-    return {'result': result}
-
-@app.route('/get-computer-hand')
-def get_computer_hand():
-    to_load = open("temp/game.pickle", "rb")
-    game = pickle.load(to_load)
-    to_load.close()
-    result = game.get_computer_hand()
-    return {'result': result}
-
-@app.route('/get-player-hand')
-def get_player_hand():
-    to_load = open("temp/game.pickle", "rb")
-    game = pickle.load(to_load)
-    to_load.close()
-    result = game.get_player_hand()
-    return {'result': result}
-
 @app.route('/insert-letters', methods = ['POST'])
 def insert_tiles():
-    to_load = open("temp/game.pickle", "rb")
-    game = pickle.load(to_load)
-    to_load.close()
+    r = redis.Redis(
+        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+        port=14591,
+        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+    game = pickle.loads(r.get('game'))
 
     request_data = request.get_json()
     tiles = request_data['letters_and_coordinates']
     result = game.insert_letters(tiles)
     game.print_board()
-    file_handler = open("temp/game.pickle", "wb")
-    pickle.dump(game, file_handler)
-    file_handler.close()
+
+    pickled_game = pickle.dumps(game)
+    r.set('game', pickled_game)
 
     return result
 
 @app.route('/dump-letters', methods = ['POST'])
 def dump_letters():
-    to_load = open("temp/game.pickle", "rb")
-    game = pickle.load(to_load)
-    to_load.close()
+    r = redis.Redis(
+        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+        port=14591,
+        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+    game = pickle.loads(r.get('game'))
+
 
     request_data = request.get_json()
     letters = request_data['letters']
     result = game.dump_letters(letters)
     game.print_board()
     print(result)
-    file_handler = open("temp/game.pickle", "wb")
-    pickle.dump(game, file_handler)
-    file_handler.close()
+
+    pickled_game = pickle.dumps(game)
+    r.set('game', pickled_game)
 
     return result
