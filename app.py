@@ -147,7 +147,8 @@ def start_game():
     tiles = game.get_tiles()
 
     pickled_game = pickle.dumps(game)
-    r.set('game', pickled_game)
+    # set Redis key to expire in two hours
+    r.set('game', pickled_game, ex=7200)
 
     return {'player_hand': player_hand, 'computer_hand': computer_hand, 'tiles': tiles}
 
@@ -162,7 +163,7 @@ def computer_make_start_move():
     result = game.get_start_move()
    
     pickled_game = pickle.dumps(game)
-    r.set('game', pickled_game)
+    r.set('game', pickled_game, ex=7200)
 
     game.print_board()
     return result
@@ -178,7 +179,7 @@ def get_best_move():
     result = game.get_best_move()
 
     pickled_game = pickle.dumps(game)
-    r.set('game', pickled_game)
+    r.set('game', pickled_game, ex=7200)
 
     game.print_board()
     return result
@@ -197,7 +198,7 @@ def insert_tiles():
     game.print_board()
 
     pickled_game = pickle.dumps(game)
-    r.set('game', pickled_game)
+    r.set('game', pickled_game, ex=7200)
 
     return result
 
@@ -217,6 +218,6 @@ def dump_letters():
     print(result)
 
     pickled_game = pickle.dumps(game)
-    r.set('game', pickled_game)
+    r.set('game', pickled_game, ex=7200)
 
     return result
