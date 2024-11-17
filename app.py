@@ -149,18 +149,18 @@ def start_game():
     player_hand = game.get_player_hand()
     tiles = game.get_tiles()
 
-    for key in r.scan_iter("prefix:*"):
-        print("deleting key")
-        print(key)
-        r.delete(key)
+    # for key in r.scan_iter("prefix:*"):
+    #     print("deleting key")
+    #     print(key)
+    #     r.delete(key)
 
-    r.flushall()
+    # r.flushall()
 
-    key = str(uuid.uuid4())
+    # key = str(uuid.uuid4())
     key = "game"
 
     pickled_game = pickle.dumps(game)
-    # set Redis key to expire in two hours
+    # set Redis key to expire in 30 minutes
     r.set('key', pickled_game, ex=1800)
 
     return {'player_hand': player_hand, 'computer_hand': computer_hand, 'tiles': tiles, 'key': key}
@@ -255,25 +255,20 @@ def dump_letters():
 # @app.route('/start')
 # def start_game():
 #     # build dawg
-#     r = redis.Redis(
-#         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-#         port=14591,
-#         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
 #     text_file = open("lexicon/scrabble_words_complete.txt", "r")
 #     big_list = text_file.read().splitlines()
 #     text_file.close()
 #     build_trie(big_list)
 #     root = build_dawg(big_list)
-#     pickled_root = pickle.dumps(root)
-#     r.set('dawg', pickled_root)
 
 #     game = ScrabbleBoard(root)
 #     computer_hand = game.get_computer_hand()
 #     player_hand = game.get_player_hand()
 #     tiles = game.get_tiles()
 
-#     pickled_game = pickle.dumps(game)
-#     r.set('game', pickled_game)
+#     file_handler = open("tmp/game.pickle", "wb")
+#     pickle.dump(game, file_handler)
+#     file_handler.close()
 
 #     return {'player_hand': player_hand, 'computer_hand': computer_hand, 'tiles': tiles}
 
@@ -283,58 +278,59 @@ def dump_letters():
 #         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
 #         port=14591,
 #         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-#     game = pickle.loads(r.get('game'))
+    
+#     to_load = open("tmp/game.pickle", 'rb')
+#     game = pickle.load(to_load)
+#     to_load.close()
 
 #     result = game.get_start_move()
-   
-#     pickled_game = pickle.dumps(game)
-#     r.set('game', pickled_game)
 
+#     file_handler = open("tmp/game.pickle", 'wb')
+#     pickle.dump(game, file_handler)
+#     file_handler.close()
+   
 #     game.print_board()
 #     return result
 
 # @app.route('/get-best-move')
 # def get_best_move():
-#     r = redis.Redis(
-#         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-#         port=14591,
-#         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-#     game = pickle.loads(r.get('game'))
+#     to_load = open("tmp/game.pickle", 'rb')
+#     game = pickle.load(to_load)
+#     to_load.close()
 
 #     result = game.get_best_move()
 
-#     pickled_game = pickle.dumps(game)
-#     r.set('game', pickled_game)
+#     file_handler = open("tmp/game.pickle", "wb")
+#     pickle.dump(game, file_handler)
+#     file_handler.close()
 
 #     game.print_board()
 #     return result
 
 # @app.route('/insert-letters', methods = ['POST'])
 # def insert_tiles():
-#     r = redis.Redis(
-#         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-#         port=14591,
-#         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-#     game = pickle.loads(r.get('game'))
-
 #     request_data = request.get_json()
 #     tiles = request_data['letters_and_coordinates']
+
+#     to_load = open("tmp/game.pickle", 'rb')
+#     game = pickle.load(to_load)
+#     to_load.close()
+
 #     result = game.insert_letters(tiles)
+
 #     game.print_board()
 
-#     pickled_game = pickle.dumps(game)
-#     r.set('game', pickled_game)
+#     file_handler = open("tmp/game.pickle", "wb")
+#     pickle.dump(game, file_handler)
+#     file_handler.close()
 
 #     return result
 
 # @app.route('/dump-letters', methods = ['POST'])
 # def dump_letters():
-#     r = redis.Redis(
-#         host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-#         port=14591,
-#         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-#     game = pickle.loads(r.get('game'))
-
+#     to_load = open("tmp/game.pickle", 'rb')
+#     game = pickle.load(to_load)
+#     to_load.close()
 
 #     request_data = request.get_json()
 #     letters = request_data['letters']
@@ -342,7 +338,8 @@ def dump_letters():
 #     game.print_board()
 #     print(result)
 
-#     pickled_game = pickle.dumps(game)
-#     r.set('game', pickled_game)
+#     file_handler = open("tmp/game.pickle", "wb")
+#     pickle.dump(game, file_handler)
+#     file_handler.close()
 
 #     return result
