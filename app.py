@@ -234,6 +234,7 @@ def dump_letters():
         port=14591,
         password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
 
+    request_data = request.get_json()
     key = request_data['key']
     key = "game"
     game = pickle.loads(r.get(key))
