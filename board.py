@@ -378,6 +378,8 @@ class ScrabbleBoard:
 
 
     def dump_letters(self, letters):
+        print("old player rack")
+        print(self.player_word_rack)
         word_rack = self.player_word_rack
         renove_items_from_list(word_rack, letters)
         [self.tile_bag.append(letter) for letter in letters]
@@ -385,6 +387,8 @@ class ScrabbleBoard:
         [self.tile_bag.remove(letter) for letter in new_letters]
         renove_items_from_list(self.tile_bag, new_letters)
         self.player_word_rack = word_rack
+        print("new player rack")
+        print(self.player_word_rack)
         return {'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag}
 
     # method to insert words into board by row and column number
