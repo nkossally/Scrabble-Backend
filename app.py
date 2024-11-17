@@ -1,11 +1,13 @@
 import pickle
 import redis
-from flask import Flask, request
-from board import ScrabbleBoard
 import random
 import uuid
+from flask_cors import CORS
+from flask import Flask, request
+from board import ScrabbleBoard
 
 app = Flask(__name__)
+CORS(app)
 
 def build_trie(lexicon):
     num_nodes = 1
