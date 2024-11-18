@@ -8,6 +8,11 @@ from dawg import build_dawg, build_trie
 
 app = Flask(__name__)
 CORS(app)
+r = redis.Redis(
+    host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+    port=14591,
+    password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+# r = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 @app.route('/')
 def get_home():
@@ -16,10 +21,6 @@ def get_home():
 @app.route('/start')
 def start_game():
     # build dawg
-    r = redis.Redis(
-        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-        port=14591,
-        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
     text_file = open("lexicon/scrabble_words_complete.txt", "r")
     big_list = text_file.read().splitlines()
     text_file.close()
@@ -49,11 +50,6 @@ def start_game():
 
 @app.route('/get-computer-first-move')
 def computer_make_start_move():
-    r = redis.Redis(
-        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-        port=14591,
-        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-    
     key = request.args.get('key') 
     key = "game"
 
@@ -69,11 +65,6 @@ def computer_make_start_move():
 
 @app.route('/get-best-move')
 def get_best_move():
-    r = redis.Redis(
-        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-        port=14591,
-        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-
     key = request.args.get('key') 
     key = "game"
 
@@ -91,11 +82,6 @@ def get_best_move():
 
 @app.route('/insert-letters', methods = ['POST'])
 def insert_tiles():
-    r = redis.Redis(
-        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-        port=14591,
-        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-
     request_data = request.get_json()
     tiles = request_data['letters_and_coordinates']
     key = request_data['key']
@@ -111,11 +97,6 @@ def insert_tiles():
 
 @app.route('/dump-letters', methods = ['POST'])
 def dump_letters():
-    r = redis.Redis(
-        host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-        port=14591,
-        password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-
     request_data = request.get_json()
     key = request_data['key']
     key = "game"
