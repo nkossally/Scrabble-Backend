@@ -357,7 +357,7 @@ class ScrabbleBoard:
             print()
         print()
     
-    def insert_letters(self, letters_and_coordinates):
+    def insert_letters(self, letters_and_coordinates, max_word, start_row, start_col, is_vertical):
         print('letters_and_coordinates')
         letters = []
         print(letters_and_coordinates)
@@ -366,16 +366,46 @@ class ScrabbleBoard:
             letter = letter_and_coordinate['letter']
             row = letter_and_coordinate['row']
             col = letter_and_coordinate['col']
+            self.board[row][col].modifier = ""
             self.board[row][col].letter = letter
             if letter in word_rack:
                 word_rack.remove(letter)
                 letters.append(letter)
+            # once letter is inserted, add squares above and below it to cross_check_queue
+            if is_vertical:
+                if col > 0:
+                    self.upper_cross_check.append((self.board[row][col - 1], letter, row, col))
+                if col < 15:
+                    self.lower_cross_check.append((self.board[row][col + 1], letter, row, col))
+            else:
+                if row > 0:
+                    self.upper_cross_check.append((self.board[row - 1][col], letter, row, col))
+                if row < 15:
+                    self.lower_cross_check.append((self.board[row + 1][col], letter, row, col))
+
+
+        # # place 0 cross-check sentinel at the beginning and end of inserted words to stop accidental overlap.
+        # # sentinels should only be for the board state opposite from the one the board is currently in
+        if is_vertical:
+            if start_row + len(max_word) < 15:
+                self.board[start_row + len(max_word) ][start_col].cross_checks_1 = [0] * 26
+            if start_row > 0:
+                self.board[start_row - 1 ][start_col].cross_checks_1 = [0] * 26
+        else:
+            if start_col + len(max_word) < 15:
+                self.board[start_row ][start_col + len(max_word)].cross_checks_0 = [0] * 26
+            if start_col > 0:
+                self.board[start_row ][start_col - 1].cross_checks_0 = [0] * 26                       
+
+        self._update_cross_checks()
+
+        self.words_on_board.append(max_word)
         
         word_rack, new_letters = refill_word_rack(word_rack, self.tile_bag)
         [self.tile_bag.remove(letter) for letter in new_letters]
         self.player_word_rack = word_rack
 
-        return {'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag}
+        return { 'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag }
 
 
     def dump_letters(self, letters):

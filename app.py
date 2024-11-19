@@ -86,8 +86,13 @@ def insert_tiles():
     tiles = request_data['letters_and_coordinates']
     key = request_data['key']
     key = "game"
+    max_word = request_data['max_word']
+    start_row = request_data['start_row']
+    start_col = request_data['start_col']
+    is_vertical = request_data['is_vertical']
+
     game = pickle.loads(r.get(key))
-    result = game.insert_letters(tiles)
+    result = game.insert_letters(tiles, max_word, start_row, start_col, is_vertical)
     game.print_board()
 
     pickled_game = pickle.dumps(game)
