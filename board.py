@@ -367,8 +367,9 @@ class ScrabbleBoard:
             row = letter_and_coordinate['row']
             col = letter_and_coordinate['col']
             self.board[row][col].letter = letter
-            word_rack.remove(letter)
-            letters.append(letter)
+            if letter in word_rack:
+                word_rack.remove(letter)
+                letters.append(letter)
         
         word_rack, new_letters = refill_word_rack(word_rack, self.tile_bag)
         [self.tile_bag.remove(letter) for letter in new_letters]

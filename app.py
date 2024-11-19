@@ -44,7 +44,7 @@ def start_game():
 
     pickled_game = pickle.dumps(game)
     # set Redis key to expire in 30 minutes
-    r.set('key', pickled_game, ex=1800)
+    r.set(key, pickled_game, ex=1800)
 
     return {'player_hand': player_hand, 'computer_hand': computer_hand, 'tiles': tiles, 'key': key}
 
@@ -53,7 +53,7 @@ def computer_make_start_move():
     key = request.args.get('key') 
     key = "game"
 
-    game = pickle.loads(r.get('key'))
+    game = pickle.loads(r.get(key))
 
     result = game.get_start_move()
    
