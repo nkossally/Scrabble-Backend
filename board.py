@@ -1,6 +1,49 @@
 import regex as re
 import random
 import copy
+from dawg import find_in_dawg, find_prefix_in_dawg
+
+
+BOARD_SIZE = 15
+LETTER_TO_SCORE = {
+    'A': 1,
+    'B': 3,
+    'C': 3,
+    'D': 2,
+    'E': 1,
+    'F': 4,
+    'G': 2,
+    'H': 4,
+    'I': 1,
+    'J': 8,
+    'K': 5,
+    'L': 1,
+    'M': 3,
+    'N': 1,
+    'O': 1,
+    'P': 3,
+    'Q': 10,
+    'R': 1,
+    'S': 1,
+    'T': 1,
+    'U': 1,
+    'V': 4,
+    'W': 4,
+    'X': 8,
+    'Y': 4,
+    'Z': 10,
+}
+
+tileScoreIdx = {
+    'ct': [112],
+    'tw': [0, 7, 14, 105, 119, 210, 217, 224],
+    'tl': [20, 24, 76, 80, 84, 88, 136, 140, 144, 148, 200, 204],
+    'dw': [16, 28, 32, 42, 48, 56, 64, 70, 154, 160, 168, 176, 182, 192, 196, 208],
+    'dl': [
+        3, 11, 36, 38, 45, 52, 59, 88, 92, 96, 98, 102, 108, 116, 122, 126, 128,
+        132, 165, 172, 179, 186, 188, 213, 221,
+    ],
+}
 
 
 class Square:
@@ -153,9 +196,34 @@ class ScrabbleBoard:
         transposed_tuples = copy.deepcopy(list(zip(*self.board)))
         self.board = [list(sublist) for sublist in transposed_tuples]
         self.is_transpose = not self.is_transpose
+    
+    def map_square(self, square):
+        return square.letter
 
     # TODO: fix scoring errors
     def _score_word(self, word, squares, dist_from_anchor):
+        print("score word" )
+        print(" word", word )
+        print("squares", squares)
+        print("dist_from_anchor", dist_from_anchor )
+        print("map", list(map(self.map_square, squares )))
+
+        # virtual_board = [["" for x in range(BOARD_SIZE)] for y in range(BOARD_SIZE)]
+        # curr_row = row
+        # curr_col = col
+
+        
+        # for i in range(len(word)):
+        #     virtual_board[curr_row][curr_col] = word[i]
+        #     if True:
+        #         curr_col += 1
+        #     else:
+        #         curr_row += 1
+        # print('virtual_board')
+        # print(virtual_board)
+        # result = self.checkAllWordsOnBoard(virtual_board, None)
+        # print(result)
+    
         score = 0
         score_multiplier = 1
 
@@ -230,6 +298,8 @@ class ScrabbleBoard:
                     continue
                 if letter in rack and self._cross_check(letter, square):
                     new_node = start_node.children[letter]
+
+                    
                     new_rack = rack.copy()
                     if wildcard:
                         new_word = word + letter + "%"
@@ -368,9 +438,7 @@ class ScrabbleBoard:
         print()
 
     def insert_letters(self, letters_and_coordinates, max_word, start_row, start_col, is_vertical):
-        print('letters_and_coordinates')
         letters = []
-        print(letters_and_coordinates)
         word_rack = self.player_word_rack
         for letter_and_coordinate in letters_and_coordinates:
             letter = letter_and_coordinate['letter']
@@ -423,8 +491,6 @@ class ScrabbleBoard:
         return {'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag}
 
     def dump_letters(self, letters):
-        print("old player rack")
-        print(self.player_word_rack)
         word_rack = self.player_word_rack
         renove_items_from_list(word_rack, letters)
         [self.tile_bag.append(letter) for letter in letters]
@@ -432,8 +498,6 @@ class ScrabbleBoard:
         [self.tile_bag.remove(letter) for letter in new_letters]
         renove_items_from_list(self.tile_bag, new_letters)
         self.player_word_rack = word_rack
-        print("new player rack")
-        print(self.player_word_rack)
         return {'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag}
 
     # method to insert words into board by row and column number
@@ -487,6 +551,22 @@ class ScrabbleBoard:
                         (self.board[row + 1][curr_col], letter, row, curr_col))
 
                 curr_col += 1
+
+        virtual_board = [["" for x in range(BOARD_SIZE)] for y in range(BOARD_SIZE)]
+        curr_row = row
+        curr_col = col
+
+        
+        for i in range(len(word)):
+            virtual_board[curr_row][curr_col] = word[i]
+            if True:
+                curr_col += 1
+            else:
+                curr_row += 1
+        print('virtual_board')
+        print(virtual_board)
+        result = self.checkAllWordsOnBoard(virtual_board, None)
+        print(result)
 
         # place 0 cross-check sentinel at the beginning and end of inserted words to stop accidental overlap.
         # sentinels should only be for the board state opposite from the one the board is currently in
@@ -570,7 +650,6 @@ class ScrabbleBoard:
                         transposed = True
                         self.best_row = row
                         self.best_col = col
-        print("best word", self.best_word)
 
         # Don't try to insert word if we couldn't find one
         if not self.best_word:
@@ -634,6 +713,270 @@ class ScrabbleBoard:
 
         return {'computer_word_rack': self.computer_word_rack, 'old_computer_word_rack': old_computer_word_rack, 'tile_bag': self.tile_bag, 'row': self.best_row, 'col': self.best_col - self.dist_from_anchor, 'word': self.best_word}
 
+    def get_is_valid_word(self, word):
+        # result = find_in_dawg(word, self.dawg_root)
+        result = find_prefix_in_dawg(word, self.dawg_root)
+        return {'result': result}
+    
+    def checkAllWordsOnBoard(
+        self,
+        virtualBoard,
+        tempBoardValues
+    ):
+        rowsAndCols = getPlacedLettersRowsAndCols(
+            virtualBoard, tempBoardValues)
+        rows = rowsAndCols['rows']
+        cols = rowsAndCols['cols']
+        score = 0
+        word = ""
+        maxWord = ""
+        start_row = None
+        start_col = None
+        isVertical = None
+    #    if the word is vertical
+        if len(rows) == 1:
+            col = cols[0]
+            wordAndScore = self.getVerticalWordAtCoordinate(
+                rows[0],
+                col,
+                virtualBoard,
+                tempBoardValues
+            )
+            word = wordAndScore['word']
+            if len(word) > len(maxWord):
+                maxWord = word
+                start_row = wordAndScore['start_row']
+                start_col = wordAndScore['start_col']
+                isVertical = True
+
+            if len(word) > 1:
+                score += wordAndScore['word_score']
+                isValidWord = find_in_dawg(word, self.dawg_root)
+                if not isValidWord:
+                    return False
+
+    #  check if any of the letters in a vertical word adjoin an already placed horizontal words.
+            for i in range(len(rows)):
+                row = rows[i]
+                wordAndScore = self.getHorizontalWordAtCoordinate(
+                    row,
+                    col,
+                    virtualBoard,
+                    tempBoardValues
+                )
+                if wordAndScore:
+                    word = wordAndScore['word']
+                    if len(word) > len(maxWord):
+                        maxWord = word
+                        start_row = wordAndScore['start_row']
+                        start_col = wordAndScore['start_col']
+                        isVertical = False
+                    if len(word) > 1:
+                        score += wordAndScore['word_score']
+                        isValidWord = find_in_dawg(word, self.dawg_root)
+                        if not isValidWord:
+                            return False
+
+        else:
+            #  word is horizontal
+            row = rows[0]
+            wordAndScore = self.getHorizontalWordAtCoordinate(
+                row,
+                cols[0],
+                virtualBoard,
+                tempBoardValues
+            )
+            word = wordAndScore['word']
+            if len(word) > len(maxWord):
+                maxWord = word
+                start_row = wordAndScore['start_row']
+                start_col = wordAndScore['start_col']
+                isVertical = False
+
+            if len(word) > 1:
+                score += wordAndScore['word_score']
+                isValidWord = find_in_dawg(word, self.dawg_root)
+
+            if not isValidWord:
+                return False
+            for i in range(len(cols)):
+
+                col = cols[i]
+                wordAndScore = self.getVerticalWordAtCoordinate(
+                    row,
+                    col,
+                    virtualBoard,
+                    tempBoardValues
+                )
+                if wordAndScore:
+                    word = wordAndScore['word']
+                    if len(word) > len(maxWord):
+                        maxWord = word
+                        start_row = wordAndScore['start_row']
+                        start_col = wordAndScore['start_col']
+                        isVertical = True
+                    if len(word) > 1:
+                        isValidWord = find_in_dawg(word, self.dawg_root)
+                        score += wordAndScore['word_score']
+                    if not isValidWord:
+                        return False
+
+        tempLetterArr = getAllTempLetters(virtualBoard, tempBoardValues)
+        maybeFifty = 50 if len(tempLetterArr) == 7 else 0
+
+    #   don't submit any one letter words
+        if len(maxWord) < 2:
+            return False
+
+        return {'score': score + maybeFifty, 'maxWord': maxWord, 'start_row': start_row, 'start_col': start_col, 'isVertical': isVertical}
+
+
+
+    def getVerticalWordAtCoordinate(
+        self,
+        x,
+        y,
+        virtualBoard,
+        tempBoardValues,
+    ):
+        currX = x
+        word = ""
+        word_score = 0
+        multiplier = 1
+        start_row = x
+        start_col = y
+        while (
+            getTempLetterAtCoordinate(currX, y, tempBoardValues) or
+            self.getLetterAtCoordinate(currX, y) or
+            getTempLetterOnVirtualBoard(currX, y, virtualBoard)
+        ):
+            word += (getTempLetterAtCoordinate(currX, y, tempBoardValues) or
+                    self.getLetterAtCoordinate(currX, y) or
+                    getTempLetterOnVirtualBoard(currX, y, virtualBoard))
+            letterScoreObj = self.calculateScoreFromLetter(
+                currX,
+                y,
+                virtualBoard,
+                None,
+                tempBoardValues,
+            )
+            word_score += letterScoreObj['letterPoints']
+            multiplier *= letterScoreObj['wordMultiplier']
+            currX += 1
+        currX = x - 1
+        while getTempLetterAtCoordinate(currX, y, tempBoardValues) or self.getLetterAtCoordinate(currX, y) or getTempLetterOnVirtualBoard(currX, y, virtualBoard):
+            word = (getTempLetterAtCoordinate(currX, y, tempBoardValues) or
+                    self.getLetterAtCoordinate(currX, y) or
+                    getTempLetterOnVirtualBoard(currX, y, virtualBoard)) + word
+            letterScoreObj = self.calculateScoreFromLetter(
+                currX,
+                y,
+                virtualBoard,
+                None,
+                tempBoardValues,
+            )
+            word_score += letterScoreObj['letterPoints']
+            multiplier *= letterScoreObj['wordMultiplier']
+            start_row = currX
+            currX -= 1
+        word_score *= multiplier
+
+        return {'word': word, 'word_score': word_score, 'start_row': start_row, 'start_col': start_col}
+
+
+    def getHorizontalWordAtCoordinate(
+        self,
+        x,
+        y,
+        virtualBoard,
+        tempBoardValues
+    ):
+        currY = y
+        word = ""
+        word_score = 0
+        multiplier = 1
+        start_row = x
+        start_col = y
+        while getTempLetterAtCoordinate(x, currY, tempBoardValues) or self.getLetterAtCoordinate(x, currY) or getTempLetterOnVirtualBoard(x, currY, virtualBoard):
+            word += (getTempLetterAtCoordinate(x, currY, tempBoardValues) or
+                    self.getLetterAtCoordinate(x, currY) or
+                    getTempLetterOnVirtualBoard(x, currY, virtualBoard))
+            letterScoreObj = self.calculateScoreFromLetter(
+                x,
+                currY,
+                virtualBoard,
+                None,
+                tempBoardValues,
+            )
+            word_score += letterScoreObj['letterPoints']
+            multiplier *= letterScoreObj['wordMultiplier']
+            currY += 1
+
+        currY = y - 1
+        while (
+            getTempLetterAtCoordinate(x, currY, tempBoardValues) or
+            self.getLetterAtCoordinate(x, currY) or
+            getTempLetterOnVirtualBoard(x, currY, virtualBoard)
+        ):
+            word = (getTempLetterAtCoordinate(x, currY, tempBoardValues) or
+                    self.getLetterAtCoordinate(x, currY) or
+                    getTempLetterOnVirtualBoard(x, currY, virtualBoard)) + word
+            letterScoreObj = self.calculateScoreFromLetter(
+                x,
+                currY,
+                virtualBoard,
+                None,
+                tempBoardValues,
+            )
+            word_score += letterScoreObj['letterPoints']
+            multiplier *= letterScoreObj['wordMultiplier']
+            start_col = currY
+            currY -= 1
+
+        word_score *= multiplier
+        return {'word': word, 'word_score': word_score,'start_row': start_row, 'start_col': start_col}
+    
+    def getLetterAtCoordinate(self, x, y):
+        return self.board[x][y].letter if isOnBoard(x, y) else None
+
+    def calculateScoreFromLetter(
+        self,
+        i,
+        j,
+        virtualBoard,
+        letterArg,
+        tempBoardValues,
+    ):
+        letter = letterArg or getTempLetterAtCoordinate(i, j, tempBoardValues) or self.getLetterAtCoordinate(
+            i, j) or getTempLetterOnVirtualBoard(i, j, virtualBoard)
+        letterPoints = LETTER_TO_SCORE[letter]
+        wordMultiplier = 1
+
+        if letterArg or getTempLetterAtCoordinate(i, j, tempBoardValues) or getTempLetterOnVirtualBoard(i, j, virtualBoard):
+            specialScore = getSpecialTileScoreIdx(i, j)
+
+            match specialScore:
+                case "ct":
+                    wordMultiplier = 2
+                case "tw":
+                    wordMultiplier = 3
+                case "tl":
+                    letterPoints *= 3
+                case "dw":
+                    wordMultiplier = 2
+                case "dl":
+                    letterPoints *= 2
+
+        return {'letterPoints': letterPoints, 'wordMultiplier': wordMultiplier}
+    
+    def get_move(self):
+        for i in range(BOARD_SIZE):
+            for j in range(BOARD_SIZE):
+                return
+
+    def get_move_helper(self):
+        return
+
 
 # returns a list of all words played on the board
 def all_board_words(board):
@@ -677,3 +1020,68 @@ def renove_items_from_list(list_1, list_2):
     for item in list_2:
         if item in list_1:
             list_1.remove(item)
+
+
+
+def getPlacedLettersRowsAndCols(virtualBoard, tempBoardValues):
+    rows = []
+    cols = []
+    for i in range(BOARD_SIZE):
+        for j in range(BOARD_SIZE):
+            if (getTempLetterOnVirtualBoard(i, j, virtualBoard)):
+                if i not in rows:
+                    rows.append(i)
+                if j not in cols:
+                    cols.append(j)
+            if (getTempLetterAtCoordinate(i, j, tempBoardValues)):
+                if i not in rows:
+                    rows.append(i)
+                if j not in cols:
+                    cols.append(j)
+
+    return {'rows': rows, 'cols': cols}
+
+
+def getTempLetterOnVirtualBoard(x, y, virtualBoard):
+    if not virtualBoard:
+        return
+    if not virtualBoard[x]:
+        return
+    return virtualBoard[x][y] if isOnBoard(x, y) else None
+
+
+def getTempLetterAtCoordinate(x, y, tempBoardValues):
+    if not tempBoardValues:
+        return
+    return tempBoardValues[x][y] if isOnBoard(x, y) else None
+
+
+def isOnBoard(x, y):
+    return x >= 0 and x < BOARD_SIZE and y >= 0 and y < BOARD_SIZE
+
+
+
+
+def getSpecialTileScoreIdx(i, j):
+    ti = toTileIndex(i, j)
+    for t in tileScoreIdx:
+        if ti in tileScoreIdx[t]:
+            return t
+    return ''
+
+
+def toTileIndex(row, column):
+    if row < BOARD_SIZE and row >= 0 and column < BOARD_SIZE and column >= 0:
+        return row * BOARD_SIZE + column
+    else:
+        return -1
+
+def getAllTempLetters (virtualBoard, tempBoardValues):
+    letters = []
+    for i in range(BOARD_SIZE):
+        for j in range(BOARD_SIZE):
+            letter = getTempLetterOnVirtualBoard(i, j, virtualBoard) or getTempLetterAtCoordinate(i, j, tempBoardValues)
+            if (letter):
+                letters.append(letter)
+
+    return letters

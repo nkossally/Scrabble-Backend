@@ -119,3 +119,24 @@ def build_dawg(lexicon):
     minimize(curr_node, 0, minimized_nodes, non_minimized_nodes)
     print(len(minimized_nodes))
     return root
+
+# check if word is in dawg
+def find_in_dawg(word, curr_node):
+    for letter in word:
+        if letter in curr_node.children:
+            curr_node = curr_node.children[letter]
+        else:
+            return False
+    if curr_node.is_terminal:
+        return True
+    else:
+        return False
+
+# check if word is in dawg
+def find_prefix_in_dawg(word, curr_node):
+    for letter in word:
+        if letter in curr_node.children:
+            curr_node = curr_node.children[letter]
+        else:
+            return False
+    return True
