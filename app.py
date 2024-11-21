@@ -8,11 +8,11 @@ from dawg import build_dawg, build_trie
 
 app = Flask(__name__)
 CORS(app)
-# r = redis.Redis(
-#     host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-#     port=14591,
-#     password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
-r = redis.Redis(host='127.0.0.1', port=6379, db=0)
+r = redis.Redis(
+    host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
+    port=14591,
+    password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+# r = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 @app.route('/')
 def get_home():
@@ -114,13 +114,4 @@ def dump_letters():
     pickled_game = pickle.dumps(game)
     r.set(key, pickled_game, ex=18000)
 
-    return result
-
-@app.route('/get-is-valid-word', methods = ['GET'])
-def get_is_valid_word():
-    word = request.args.get('word') 
-    key = "game"
-
-    game = pickle.loads(r.get(key))
-    result = game.get_is_valid_word(word)
     return result

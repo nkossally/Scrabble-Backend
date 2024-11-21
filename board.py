@@ -572,7 +572,7 @@ class ScrabbleBoard:
                 curr_col += 1
             else:
                 curr_row += 1
-        result = self.checkAllWordsOnBoard(virtual_board, None, word)
+        result = self.checkAllWordsOnBoard(virtual_board, None)
 
         # place 0 cross-check sentinel at the beginning and end of inserted words to stop accidental overlap.
         # sentinels should only be for the board state opposite from the one the board is currently in
@@ -619,72 +619,6 @@ class ScrabbleBoard:
         # reset anchor square spot to blank after trying all combinations
         self.board[square_row][square_col - 1].letter = None
 
-    # scan all tiles on board in both transposed and non-transposed state, find best move
-    def get_best_move(self):
-
-        old_computer_word_rack = self.computer_word_rack.copy()
-        word_rack = self.computer_word_rack
-
-        # clear out cross-check lists before adding new words
-        self._update_cross_checks()
-
-        # reset word variables to clear out words from previous turns
-        self.best_word = ""
-        self.highest_score = 0
-        self.best_row = 0
-        self.best_col = 0
-
-        transposed = False
-        for row in range(0, 15):
-            for col in range(0, 15):
-                curr_square = self.board[row][col]
-                if curr_square.letter and (not self.board[row][col - 1].letter):
-                    prev_best_score = self.highest_score
-                    self.get_all_words(row + 1, col + 1, word_rack)
-                    if self.highest_score > prev_best_score:
-                        self.best_row = row
-                        self.best_col = col
-
-        self._transpose()
-        for row in range(0, 15):
-            for col in range(0, 15):
-                curr_square = self.board[row][col]
-                if curr_square.letter and (not self.board[row][col - 1].letter):
-                    prev_best_score = self.highest_score
-                    self.get_all_words(row + 1, col + 1, word_rack)
-                    if self.highest_score > prev_best_score:
-                        transposed = True
-                        self.best_row = row
-                        self.best_col = col
-
-        # Don't try to insert word if we couldn't find one
-        if not self.best_word:
-            self._transpose()
-            return {}
-
-        if transposed:
-            self.insert_word(self.best_row + 1, self.best_col +
-                             1 - self.dist_from_anchor, self.best_word)
-            self._transpose()
-        else:
-            self._transpose()
-            self.insert_word(self.best_row + 1, self.best_col +
-                             1 - self.dist_from_anchor, self.best_word)
-
-        self.word_score_dict[self.best_word] = self.highest_score
-
-        for letter in self.letters_from_rack:
-            if letter in word_rack:
-                word_rack.remove(letter)
-
-        word_rack, new_letters = refill_word_rack(word_rack, self.tile_bag)
-        [self.tile_bag.remove(letter) for letter in new_letters]
-        self.computer_word_rack = word_rack
-
-        col = self.best_col - self.dist_from_anchor if not transposed else self.best_row
-        row = self.best_row if not transposed else self.best_col - self.dist_from_anchor
-
-        return {'word': self.best_word, 'computer_word_rack': self.computer_word_rack, 'tile_bag': self.tile_bag, 'row': row, 'col': col, 'used_letters': self.letters_from_rack, 'is_vertical': transposed, 'old_computer_word_rack': old_computer_word_rack}
 
     def get_start_move(self):
         # board symmetrical at start so just always play the start move horizontally
@@ -716,16 +650,10 @@ class ScrabbleBoard:
 
         return {'computer_word_rack': self.computer_word_rack, 'old_computer_word_rack': old_computer_word_rack, 'tile_bag': self.tile_bag, 'row': self.best_row, 'col': self.best_col - self.dist_from_anchor, 'word': self.best_word}
 
-    def get_is_valid_word(self, word):
-        # result = find_in_dawg(word, self.dawg_root)
-        result = find_prefix_in_dawg(word, self.dawg_root)
-        return {'result': result}
-    
     def checkAllWordsOnBoard(
         self,
         virtualBoard,
-        tempBoardValues, 
-        word_placed
+        tempBoardValues
     ):
         rowsAndCols = getPlacedLettersRowsAndCols(
             virtualBoard, tempBoardValues)
@@ -1018,7 +946,7 @@ class ScrabbleBoard:
                 else:
                     v_col += 1
 
-            result = self.checkAllWordsOnBoard(virtual_board, None, new_word_so_far)
+            result = self.checkAllWordsOnBoard(virtual_board, None)
             if result:
                 score = result['score']
                 if score > self.highest_score:
