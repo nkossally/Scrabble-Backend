@@ -157,6 +157,7 @@ class ScrabbleBoard:
         self.word_rack = []
         self.word_score_dict = {}
         self.best_word = ""
+        self.best_word_is_vertical = True
         self.highest_score = 0
         self.dist_from_anchor = 0
         self.letters_from_rack = []
@@ -207,22 +208,6 @@ class ScrabbleBoard:
         print("squares", squares)
         print("dist_from_anchor", dist_from_anchor )
         print("map", list(map(self.map_square, squares )))
-
-        # virtual_board = [["" for x in range(BOARD_SIZE)] for y in range(BOARD_SIZE)]
-        # curr_row = row
-        # curr_col = col
-
-        
-        # for i in range(len(word)):
-        #     virtual_board[curr_row][curr_col] = word[i]
-        #     if True:
-        #         curr_col += 1
-        #     else:
-        #         curr_row += 1
-        # print('virtual_board')
-        # print(virtual_board)
-        # result = self.checkAllWordsOnBoard(virtual_board, None)
-        # print(result)
     
         score = 0
         score_multiplier = 1
@@ -436,6 +421,30 @@ class ScrabbleBoard:
             [print(square, end="  ") for square in row]
             print()
         print()
+    
+    def insert_best_word(self):
+        letters = []
+        old_computer_word_rack =  self.computer_word_rack.copy()
+        word_rack = self.computer_word_rack
+        curr_row = self.best_row
+        curr_col = self.best_col
+        for letter in self.best_word:
+            if not self.board[curr_row][curr_col].letter:
+                self.board[curr_row][curr_col].letter = letter
+                letters.append(letter)
+                if letter in word_rack:
+                    word_rack.remove(letter)
+            if self.best_word_is_vertical:
+                curr_row += 1
+            else:
+                curr_col += 1
+
+        word_rack, new_letters = refill_word_rack(word_rack, self.tile_bag)
+        [self.tile_bag.remove(letter) for letter in new_letters]
+        self.computer_word_rack = word_rack
+
+        return {'word': self.best_word, 'computer_word_rack': word_rack, 'tile_bag': self.tile_bag, 'row': self.best_row, 'col': self.best_col, 'used_letters': letters, 'is_vertical': self.best_word_is_vertical, 'old_computer_word_rack': old_computer_word_rack, 'score': self.highest_score}
+
 
     def insert_letters(self, letters_and_coordinates, max_word, start_row, start_col, is_vertical):
         letters = []
@@ -563,10 +572,7 @@ class ScrabbleBoard:
                 curr_col += 1
             else:
                 curr_row += 1
-        print('virtual_board')
-        print(virtual_board)
-        result = self.checkAllWordsOnBoard(virtual_board, None)
-        print(result)
+        result = self.checkAllWordsOnBoard(virtual_board, None, word)
 
         # place 0 cross-check sentinel at the beginning and end of inserted words to stop accidental overlap.
         # sentinels should only be for the board state opposite from the one the board is currently in
@@ -708,9 +714,6 @@ class ScrabbleBoard:
         [self.tile_bag.remove(letter) for letter in new_letters]
         self.computer_word_rack = word_rack
 
-        print({'computer_word_rack': self.computer_word_rack, 'tile_bag': self.tile_bag,
-              'row': self.best_row, 'col': self.best_col - self.dist_from_anchor, 'word': self.best_word})
-
         return {'computer_word_rack': self.computer_word_rack, 'old_computer_word_rack': old_computer_word_rack, 'tile_bag': self.tile_bag, 'row': self.best_row, 'col': self.best_col - self.dist_from_anchor, 'word': self.best_word}
 
     def get_is_valid_word(self, word):
@@ -721,7 +724,8 @@ class ScrabbleBoard:
     def checkAllWordsOnBoard(
         self,
         virtualBoard,
-        tempBoardValues
+        tempBoardValues, 
+        word_placed
     ):
         rowsAndCols = getPlacedLettersRowsAndCols(
             virtualBoard, tempBoardValues)
@@ -734,7 +738,7 @@ class ScrabbleBoard:
         start_col = None
         isVertical = None
     #    if the word is vertical
-        if len(rows) == 1:
+        if len(cols) == 1:
             col = cols[0]
             wordAndScore = self.getVerticalWordAtCoordinate(
                 rows[0],
@@ -797,8 +801,8 @@ class ScrabbleBoard:
                 score += wordAndScore['word_score']
                 isValidWord = find_in_dawg(word, self.dawg_root)
 
-            if not isValidWord:
-                return False
+                if not isValidWord:
+                    return False
             for i in range(len(cols)):
 
                 col = cols[i]
@@ -814,12 +818,12 @@ class ScrabbleBoard:
                         maxWord = word
                         start_row = wordAndScore['start_row']
                         start_col = wordAndScore['start_col']
-                        isVertical = True
+                        isVertical = False
                     if len(word) > 1:
                         isValidWord = find_in_dawg(word, self.dawg_root)
                         score += wordAndScore['word_score']
-                    if not isValidWord:
-                        return False
+                        if not isValidWord:
+                            return False
 
         tempLetterArr = getAllTempLetters(virtualBoard, tempBoardValues)
         maybeFifty = 50 if len(tempLetterArr) == 7 else 0
@@ -937,7 +941,7 @@ class ScrabbleBoard:
         return {'word': word, 'word_score': word_score,'start_row': start_row, 'start_col': start_col}
     
     def getLetterAtCoordinate(self, x, y):
-        return self.board[x][y].letter if isOnBoard(x, y) else None
+        return self.board[x][y].letter if is_on_board(x, y) else None
 
     def calculateScoreFromLetter(
         self,
@@ -970,12 +974,70 @@ class ScrabbleBoard:
         return {'letterPoints': letterPoints, 'wordMultiplier': wordMultiplier}
     
     def get_move(self):
-        for i in range(BOARD_SIZE):
-            for j in range(BOARD_SIZE):
-                return
+        self.best_word = ''
+        self.highest_score = 0
 
-    def get_move_helper(self):
-        return
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                if not (is_on_board(row - 1, col) and self.board[row - 1][col].letter):
+                    self.get_move_helper( self.computer_word_rack.copy() , '', row, col, row, col, True, False, row == 7 and col == 7, False )
+                if not (is_on_board(row, col - 1) and self.board[row][col - 1].letter):
+                    self.get_move_helper( self.computer_word_rack.copy() , '', row, col, row, col, False, False, row == 7 and col == 7, False )
+        return self.insert_best_word()
+        
+
+    def get_move_helper(self, letters, word_so_far, start_row, start_col, row, col, is_vertical, contains_prev_letter, contains_center, played_a_letter):
+
+        curr_row = row
+        curr_col = col
+        new_contains_prev_letter = contains_prev_letter
+        new_contains_center = contains_center
+        new_word_so_far = word_so_far
+        while is_on_board(curr_row, curr_col) and self.board[curr_row][curr_col].letter:
+            new_word_so_far += self.board[curr_row][curr_col].letter
+            if not find_prefix_in_dawg(new_word_so_far, self.dawg_root):
+               return
+            new_contains_prev_letter = True
+            new_contains_center = new_contains_center or (curr_row == 7 and curr_col == 7)
+            if is_vertical:
+                curr_row += 1
+            else:
+                curr_col += 1
+        
+        if played_a_letter and find_in_dawg(new_word_so_far, self.dawg_root) and new_contains_prev_letter:
+            virtual_board = [["" for x in range(BOARD_SIZE)] for y in range(BOARD_SIZE)]
+            idx = 0
+            v_row = start_row
+            v_col = start_col
+            while idx <  len(new_word_so_far):
+                if not self.board[v_row][v_col].letter:
+                    virtual_board[v_row][v_col] = new_word_so_far[idx]
+                idx += 1
+                if is_vertical:
+                    v_row += 1
+                else:
+                    v_col += 1
+
+            result = self.checkAllWordsOnBoard(virtual_board, None, new_word_so_far)
+            if result:
+                score = result['score']
+                if score > self.highest_score:
+                    self.highest_score = score
+                    self.best_word = new_word_so_far
+                    self.best_col = start_col
+                    self.best_row = start_row
+                    self.best_word_is_vertical = is_vertical
+
+        if not is_on_board(curr_row, curr_col):
+            return
+
+        for letter in letters:
+            if find_prefix_in_dawg(new_word_so_far + letter, self.dawg_root):
+                new_letters = letters.copy()
+                new_letters.remove(letter)
+                next_row =  curr_row + 1 if is_vertical else curr_row
+                next_col = curr_col if is_vertical else curr_col + 1
+                self.get_move_helper( new_letters, new_word_so_far + letter, start_row, start_col, next_row, next_col, is_vertical, new_contains_prev_letter, new_contains_center, True)
 
 
 # returns a list of all words played on the board
@@ -1043,20 +1105,22 @@ def getPlacedLettersRowsAndCols(virtualBoard, tempBoardValues):
 
 
 def getTempLetterOnVirtualBoard(x, y, virtualBoard):
+    if not is_on_board(x, y):
+        return None
     if not virtualBoard:
         return
     if not virtualBoard[x]:
         return
-    return virtualBoard[x][y] if isOnBoard(x, y) else None
+    return virtualBoard[x][y] if is_on_board(x, y) else None
 
 
 def getTempLetterAtCoordinate(x, y, tempBoardValues):
     if not tempBoardValues:
         return
-    return tempBoardValues[x][y] if isOnBoard(x, y) else None
+    return tempBoardValues[x][y] if is_on_board(x, y) else None
 
 
-def isOnBoard(x, y):
+def is_on_board(x, y):
     return x >= 0 and x < BOARD_SIZE and y >= 0 and y < BOARD_SIZE
 
 
