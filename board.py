@@ -459,43 +459,11 @@ class ScrabbleBoard:
             if letter in word_rack:
                 word_rack.remove(letter)
 
-            # once letter is inserted, add squares above and below it to cross_check_queue
-            if is_vertical:
-                if col > 0:
-                    self.upper_cross_check.append(
-                        (self.board[row][col - 1], letter, row, col))
-                if col < 15:
-                    self.lower_cross_check.append(
-                        (self.board[row][col + 1], letter, row, col))
-            else:
-                if row > 0:
-                    self.upper_cross_check.append(
-                        (self.board[row - 1][col], letter, row, col))
-                if row < 15:
-                    self.lower_cross_check.append(
-                        (self.board[row + 1][col], letter, row, col))
+
 
         word_rack, new_letters = refill_word_rack(word_rack, self.tile_bag)
         [self.tile_bag.remove(letter) for letter in new_letters]
         self.player_word_rack = word_rack
-        # # place 0 cross-check sentinel at the beginning and end of inserted words to stop accidental overlap.
-        # # sentinels should only be for the board state opposite from the one the board is currently in
-        if is_vertical:
-            if start_row + len(max_word) < 15:
-                self.board[start_row +
-                           len(max_word)][start_col].cross_checks_1 = [0] * 26
-            if start_row > 0:
-                self.board[start_row - 1][start_col].cross_checks_1 = [0] * 26
-        else:
-            if start_col + len(max_word) < 15:
-                self.board[start_row][start_col +
-                                      len(max_word)].cross_checks_0 = [0] * 26
-            if start_col > 0:
-                self.board[start_row][start_col - 1].cross_checks_0 = [0] * 26
-
-        self._update_cross_checks()
-
-        self.words_on_board.append(max_word)
 
         return {'player_word_rack': self.player_word_rack, 'tile_bag': self.tile_bag}
 
@@ -652,11 +620,11 @@ class ScrabbleBoard:
 
     def checkAllWordsOnBoard(
         self,
-        virtualBoard,
+        virtual_board,
         tempBoardValues
     ):
         rowsAndCols = getPlacedLettersRowsAndCols(
-            virtualBoard, tempBoardValues)
+            virtual_board, tempBoardValues)
         rows = rowsAndCols['rows']
         cols = rowsAndCols['cols']
         score = 0
@@ -671,7 +639,7 @@ class ScrabbleBoard:
             wordAndScore = self.getVerticalWordAtCoordinate(
                 rows[0],
                 col,
-                virtualBoard,
+                virtual_board,
                 tempBoardValues
             )
             word = wordAndScore['word']
@@ -693,7 +661,7 @@ class ScrabbleBoard:
                 wordAndScore = self.getHorizontalWordAtCoordinate(
                     row,
                     col,
-                    virtualBoard,
+                    virtual_board,
                     tempBoardValues
                 )
                 if wordAndScore:
@@ -715,7 +683,7 @@ class ScrabbleBoard:
             wordAndScore = self.getHorizontalWordAtCoordinate(
                 row,
                 cols[0],
-                virtualBoard,
+                virtual_board,
                 tempBoardValues
             )
             word = wordAndScore['word']
@@ -737,7 +705,7 @@ class ScrabbleBoard:
                 wordAndScore = self.getVerticalWordAtCoordinate(
                     row,
                     col,
-                    virtualBoard,
+                    virtual_board,
                     tempBoardValues
                 )
                 if wordAndScore:
@@ -753,7 +721,7 @@ class ScrabbleBoard:
                         if not isValidWord:
                             return False
 
-        tempLetterArr = getAllTempLetters(virtualBoard, tempBoardValues)
+        tempLetterArr = getAllTempLetters(virtual_board, tempBoardValues)
         maybeFifty = 50 if len(tempLetterArr) == 7 else 0
 
     #   don't submit any one letter words
@@ -768,7 +736,7 @@ class ScrabbleBoard:
         self,
         x,
         y,
-        virtualBoard,
+        virtual_board,
         tempBoardValues,
     ):
         currX = x
@@ -780,15 +748,15 @@ class ScrabbleBoard:
         while (
             getTempLetterAtCoordinate(currX, y, tempBoardValues) or
             self.getLetterAtCoordinate(currX, y) or
-            getTempLetterOnVirtualBoard(currX, y, virtualBoard)
+            getTempLetterOnVirtualBoard(currX, y, virtual_board)
         ):
             word += (getTempLetterAtCoordinate(currX, y, tempBoardValues) or
                     self.getLetterAtCoordinate(currX, y) or
-                    getTempLetterOnVirtualBoard(currX, y, virtualBoard))
+                    getTempLetterOnVirtualBoard(currX, y, virtual_board))
             letterScoreObj = self.calculateScoreFromLetter(
                 currX,
                 y,
-                virtualBoard,
+                virtual_board,
                 None,
                 tempBoardValues,
             )
@@ -796,14 +764,14 @@ class ScrabbleBoard:
             multiplier *= letterScoreObj['wordMultiplier']
             currX += 1
         currX = x - 1
-        while getTempLetterAtCoordinate(currX, y, tempBoardValues) or self.getLetterAtCoordinate(currX, y) or getTempLetterOnVirtualBoard(currX, y, virtualBoard):
+        while getTempLetterAtCoordinate(currX, y, tempBoardValues) or self.getLetterAtCoordinate(currX, y) or getTempLetterOnVirtualBoard(currX, y, virtual_board):
             word = (getTempLetterAtCoordinate(currX, y, tempBoardValues) or
                     self.getLetterAtCoordinate(currX, y) or
-                    getTempLetterOnVirtualBoard(currX, y, virtualBoard)) + word
+                    getTempLetterOnVirtualBoard(currX, y, virtual_board)) + word
             letterScoreObj = self.calculateScoreFromLetter(
                 currX,
                 y,
-                virtualBoard,
+                virtual_board,
                 None,
                 tempBoardValues,
             )
@@ -820,7 +788,7 @@ class ScrabbleBoard:
         self,
         x,
         y,
-        virtualBoard,
+        virtual_board,
         tempBoardValues
     ):
         currY = y
@@ -829,14 +797,14 @@ class ScrabbleBoard:
         multiplier = 1
         start_row = x
         start_col = y
-        while getTempLetterAtCoordinate(x, currY, tempBoardValues) or self.getLetterAtCoordinate(x, currY) or getTempLetterOnVirtualBoard(x, currY, virtualBoard):
+        while getTempLetterAtCoordinate(x, currY, tempBoardValues) or self.getLetterAtCoordinate(x, currY) or getTempLetterOnVirtualBoard(x, currY, virtual_board):
             word += (getTempLetterAtCoordinate(x, currY, tempBoardValues) or
                     self.getLetterAtCoordinate(x, currY) or
-                    getTempLetterOnVirtualBoard(x, currY, virtualBoard))
+                    getTempLetterOnVirtualBoard(x, currY, virtual_board))
             letterScoreObj = self.calculateScoreFromLetter(
                 x,
                 currY,
-                virtualBoard,
+                virtual_board,
                 None,
                 tempBoardValues,
             )
@@ -848,15 +816,15 @@ class ScrabbleBoard:
         while (
             getTempLetterAtCoordinate(x, currY, tempBoardValues) or
             self.getLetterAtCoordinate(x, currY) or
-            getTempLetterOnVirtualBoard(x, currY, virtualBoard)
+            getTempLetterOnVirtualBoard(x, currY, virtual_board)
         ):
             word = (getTempLetterAtCoordinate(x, currY, tempBoardValues) or
                     self.getLetterAtCoordinate(x, currY) or
-                    getTempLetterOnVirtualBoard(x, currY, virtualBoard)) + word
+                    getTempLetterOnVirtualBoard(x, currY, virtual_board)) + word
             letterScoreObj = self.calculateScoreFromLetter(
                 x,
                 currY,
-                virtualBoard,
+                virtual_board,
                 None,
                 tempBoardValues,
             )
@@ -875,16 +843,16 @@ class ScrabbleBoard:
         self,
         i,
         j,
-        virtualBoard,
+        virtual_board,
         letterArg,
         tempBoardValues,
     ):
         letter = letterArg or getTempLetterAtCoordinate(i, j, tempBoardValues) or self.getLetterAtCoordinate(
-            i, j) or getTempLetterOnVirtualBoard(i, j, virtualBoard)
+            i, j) or getTempLetterOnVirtualBoard(i, j, virtual_board)
         letterPoints = LETTER_TO_SCORE[letter]
         wordMultiplier = 1
 
-        if letterArg or getTempLetterAtCoordinate(i, j, tempBoardValues) or getTempLetterOnVirtualBoard(i, j, virtualBoard):
+        if letterArg or getTempLetterAtCoordinate(i, j, tempBoardValues) or getTempLetterOnVirtualBoard(i, j, virtual_board):
             specialScore = getSpecialTileScoreIdx(i, j)
 
             match specialScore:
@@ -968,37 +936,6 @@ class ScrabbleBoard:
                 self.get_move_helper( new_letters, new_word_so_far + letter, start_row, start_col, next_row, next_col, is_vertical, new_contains_prev_letter, new_contains_center, True)
 
 
-# returns a list of all words played on the board
-def all_board_words(board):
-    board_words = []
-
-    # check regular board
-    for row in range(0, 15):
-        temp_word = ""
-        for col in range(0, 16):
-            letter = board[row][col].letter
-            if letter:
-                temp_word += letter
-            else:
-                if len(temp_word) > 1:
-                    board_words.append(temp_word)
-                temp_word = ""
-
-    # check transposed board
-    for col in range(0, 16):
-        temp_word = ""
-        for row in range(0, 16):
-            letter = board[row][col].letter
-            if letter:
-                temp_word += letter
-            else:
-                if len(temp_word) > 1:
-                    board_words.append(temp_word)
-                temp_word = ""
-
-    return board_words
-
-
 def refill_word_rack(rack, tile_bag):
     to_add = min([7 - len(rack), len(tile_bag)])
     new_letters = random.sample(tile_bag, to_add)
@@ -1013,12 +950,12 @@ def renove_items_from_list(list_1, list_2):
 
 
 
-def getPlacedLettersRowsAndCols(virtualBoard, tempBoardValues):
+def getPlacedLettersRowsAndCols(virtual_board, tempBoardValues):
     rows = []
     cols = []
     for i in range(BOARD_SIZE):
         for j in range(BOARD_SIZE):
-            if (getTempLetterOnVirtualBoard(i, j, virtualBoard)):
+            if (getTempLetterOnVirtualBoard(i, j, virtual_board)):
                 if i not in rows:
                     rows.append(i)
                 if j not in cols:
@@ -1032,14 +969,14 @@ def getPlacedLettersRowsAndCols(virtualBoard, tempBoardValues):
     return {'rows': rows, 'cols': cols}
 
 
-def getTempLetterOnVirtualBoard(x, y, virtualBoard):
+def getTempLetterOnVirtualBoard(x, y, virtual_board):
     if not is_on_board(x, y):
         return None
-    if not virtualBoard:
+    if not virtual_board:
         return
-    if not virtualBoard[x]:
+    if not virtual_board[x]:
         return
-    return virtualBoard[x][y] if is_on_board(x, y) else None
+    return virtual_board[x][y] if is_on_board(x, y) else None
 
 
 def getTempLetterAtCoordinate(x, y, tempBoardValues):
@@ -1068,11 +1005,11 @@ def toTileIndex(row, column):
     else:
         return -1
 
-def getAllTempLetters (virtualBoard, tempBoardValues):
+def getAllTempLetters (virtual_board, tempBoardValues):
     letters = []
     for i in range(BOARD_SIZE):
         for j in range(BOARD_SIZE):
-            letter = getTempLetterOnVirtualBoard(i, j, virtualBoard) or getTempLetterAtCoordinate(i, j, tempBoardValues)
+            letter = getTempLetterOnVirtualBoard(i, j, virtual_board) or getTempLetterAtCoordinate(i, j, tempBoardValues)
             if (letter):
                 letters.append(letter)
 
