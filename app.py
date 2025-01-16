@@ -9,9 +9,9 @@ from dawg import build_dawg, build_trie
 app = Flask(__name__)
 CORS(app)
 r = redis.Redis(
-    host='redis-14591.c261.us-east-1-4.ec2.redns.redis-cloud.com',
-    port=14591,
-    password='pfFOtNMBlIPZ2XqAGgt3NbJm7n38brgh')
+    host='redis-19746.c16.us-east-1-2.ec2.redns.redis-cloud.com',
+    port=19746,
+    password='iUEA7AvNltZ8138nIYl9dCepAfLl7pxz')
 # r = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 @app.route('/')
