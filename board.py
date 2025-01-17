@@ -540,7 +540,7 @@ class ScrabbleBoard:
                 curr_col += 1
             else:
                 curr_row += 1
-        result = self.checkAllWordsOnBoard(virtual_board, None)
+        result = self.check_all_words_on_board(virtual_board, None)
 
         # place 0 cross-check sentinel at the beginning and end of inserted words to stop accidental overlap.
         # sentinels should only be for the board state opposite from the one the board is currently in
@@ -618,12 +618,12 @@ class ScrabbleBoard:
 
         return {'computer_word_rack': self.computer_word_rack, 'old_computer_word_rack': old_computer_word_rack, 'tile_bag': self.tile_bag, 'row': self.best_row, 'col': self.best_col - self.dist_from_anchor, 'word': self.best_word}
 
-    def checkAllWordsOnBoard(
+    def check_all_words_on_board(
         self,
         virtual_board,
         tempBoardValues
     ):
-        rowsAndCols = getPlacedLettersRowsAndCols(
+        rowsAndCols = get_placed_letters_rows_and_cols(
             virtual_board, tempBoardValues)
         rows = rowsAndCols['rows']
         cols = rowsAndCols['cols']
@@ -636,7 +636,7 @@ class ScrabbleBoard:
     #    if the word is vertical
         if len(cols) == 1:
             col = cols[0]
-            wordAndScore = self.getVerticalWordAtCoordinate(
+            wordAndScore = self.get_vertical_word_at_coordinate(
                 rows[0],
                 col,
                 virtual_board,
@@ -658,7 +658,7 @@ class ScrabbleBoard:
     #  check if any of the letters in a vertical word adjoin an already placed horizontal words.
             for i in range(len(rows)):
                 row = rows[i]
-                wordAndScore = self.getHorizontalWordAtCoordinate(
+                wordAndScore = self.get_horizontal_word_at_coordinate(
                     row,
                     col,
                     virtual_board,
@@ -680,7 +680,7 @@ class ScrabbleBoard:
         else:
             #  word is horizontal
             row = rows[0]
-            wordAndScore = self.getHorizontalWordAtCoordinate(
+            wordAndScore = self.get_horizontal_word_at_coordinate(
                 row,
                 cols[0],
                 virtual_board,
@@ -702,7 +702,7 @@ class ScrabbleBoard:
             for i in range(len(cols)):
 
                 col = cols[i]
-                wordAndScore = self.getVerticalWordAtCoordinate(
+                wordAndScore = self.get_vertical_word_at_coordinate(
                     row,
                     col,
                     virtual_board,
@@ -721,7 +721,7 @@ class ScrabbleBoard:
                         if not isValidWord:
                             return False
 
-        tempLetterArr = getAllTempLetters(virtual_board, tempBoardValues)
+        tempLetterArr = get_all_temp_letters(virtual_board, tempBoardValues)
         maybeFifty = 50 if len(tempLetterArr) == 7 else 0
 
     #   don't submit any one letter words
@@ -732,7 +732,7 @@ class ScrabbleBoard:
 
 
 
-    def getVerticalWordAtCoordinate(
+    def get_vertical_word_at_coordinate(
         self,
         x,
         y,
@@ -746,13 +746,13 @@ class ScrabbleBoard:
         start_row = x
         start_col = y
         while (
-            getTempLetterAtCoordinate(currX, y, tempBoardValues) or
-            self.getLetterAtCoordinate(currX, y) or
-            getTempLetterOnVirtualBoard(currX, y, virtual_board)
+            get_temp_letter_at_coordinate(currX, y, tempBoardValues) or
+            self.get_letter_at_coordinate(currX, y) or
+            get_temp_letter_on_virtual_board(currX, y, virtual_board)
         ):
-            word += (getTempLetterAtCoordinate(currX, y, tempBoardValues) or
-                    self.getLetterAtCoordinate(currX, y) or
-                    getTempLetterOnVirtualBoard(currX, y, virtual_board))
+            word += (get_temp_letter_at_coordinate(currX, y, tempBoardValues) or
+                    self.get_letter_at_coordinate(currX, y) or
+                    get_temp_letter_on_virtual_board(currX, y, virtual_board))
             letterScoreObj = self.calculateScoreFromLetter(
                 currX,
                 y,
@@ -764,10 +764,10 @@ class ScrabbleBoard:
             multiplier *= letterScoreObj['wordMultiplier']
             currX += 1
         currX = x - 1
-        while getTempLetterAtCoordinate(currX, y, tempBoardValues) or self.getLetterAtCoordinate(currX, y) or getTempLetterOnVirtualBoard(currX, y, virtual_board):
-            word = (getTempLetterAtCoordinate(currX, y, tempBoardValues) or
-                    self.getLetterAtCoordinate(currX, y) or
-                    getTempLetterOnVirtualBoard(currX, y, virtual_board)) + word
+        while get_temp_letter_at_coordinate(currX, y, tempBoardValues) or self.get_letter_at_coordinate(currX, y) or get_temp_letter_on_virtual_board(currX, y, virtual_board):
+            word = (get_temp_letter_at_coordinate(currX, y, tempBoardValues) or
+                    self.get_letter_at_coordinate(currX, y) or
+                    get_temp_letter_on_virtual_board(currX, y, virtual_board)) + word
             letterScoreObj = self.calculateScoreFromLetter(
                 currX,
                 y,
@@ -784,7 +784,7 @@ class ScrabbleBoard:
         return {'word': word, 'word_score': word_score, 'start_row': start_row, 'start_col': start_col}
 
 
-    def getHorizontalWordAtCoordinate(
+    def get_horizontal_word_at_coordinate(
         self,
         x,
         y,
@@ -797,10 +797,10 @@ class ScrabbleBoard:
         multiplier = 1
         start_row = x
         start_col = y
-        while getTempLetterAtCoordinate(x, currY, tempBoardValues) or self.getLetterAtCoordinate(x, currY) or getTempLetterOnVirtualBoard(x, currY, virtual_board):
-            word += (getTempLetterAtCoordinate(x, currY, tempBoardValues) or
-                    self.getLetterAtCoordinate(x, currY) or
-                    getTempLetterOnVirtualBoard(x, currY, virtual_board))
+        while get_temp_letter_at_coordinate(x, currY, tempBoardValues) or self.get_letter_at_coordinate(x, currY) or get_temp_letter_on_virtual_board(x, currY, virtual_board):
+            word += (get_temp_letter_at_coordinate(x, currY, tempBoardValues) or
+                    self.get_letter_at_coordinate(x, currY) or
+                    get_temp_letter_on_virtual_board(x, currY, virtual_board))
             letterScoreObj = self.calculateScoreFromLetter(
                 x,
                 currY,
@@ -814,13 +814,13 @@ class ScrabbleBoard:
 
         currY = y - 1
         while (
-            getTempLetterAtCoordinate(x, currY, tempBoardValues) or
-            self.getLetterAtCoordinate(x, currY) or
-            getTempLetterOnVirtualBoard(x, currY, virtual_board)
+            get_temp_letter_at_coordinate(x, currY, tempBoardValues) or
+            self.get_letter_at_coordinate(x, currY) or
+            get_temp_letter_on_virtual_board(x, currY, virtual_board)
         ):
-            word = (getTempLetterAtCoordinate(x, currY, tempBoardValues) or
-                    self.getLetterAtCoordinate(x, currY) or
-                    getTempLetterOnVirtualBoard(x, currY, virtual_board)) + word
+            word = (get_temp_letter_at_coordinate(x, currY, tempBoardValues) or
+                    self.get_letter_at_coordinate(x, currY) or
+                    get_temp_letter_on_virtual_board(x, currY, virtual_board)) + word
             letterScoreObj = self.calculateScoreFromLetter(
                 x,
                 currY,
@@ -836,7 +836,7 @@ class ScrabbleBoard:
         word_score *= multiplier
         return {'word': word, 'word_score': word_score,'start_row': start_row, 'start_col': start_col}
     
-    def getLetterAtCoordinate(self, x, y):
+    def get_letter_at_coordinate(self, x, y):
         return self.board[x][y].letter if is_on_board(x, y) else None
 
     def calculateScoreFromLetter(
@@ -847,13 +847,13 @@ class ScrabbleBoard:
         letterArg,
         tempBoardValues,
     ):
-        letter = letterArg or getTempLetterAtCoordinate(i, j, tempBoardValues) or self.getLetterAtCoordinate(
-            i, j) or getTempLetterOnVirtualBoard(i, j, virtual_board)
+        letter = letterArg or get_temp_letter_at_coordinate(i, j, tempBoardValues) or self.get_letter_at_coordinate(
+            i, j) or get_temp_letter_on_virtual_board(i, j, virtual_board)
         letterPoints = LETTER_TO_SCORE[letter]
         wordMultiplier = 1
 
-        if letterArg or getTempLetterAtCoordinate(i, j, tempBoardValues) or getTempLetterOnVirtualBoard(i, j, virtual_board):
-            specialScore = getSpecialTileScoreIdx(i, j)
+        if letterArg or get_temp_letter_at_coordinate(i, j, tempBoardValues) or get_temp_letter_on_virtual_board(i, j, virtual_board):
+            specialScore = get_special_tile_score_idx(i, j)
 
             match specialScore:
                 case "ct":
@@ -914,7 +914,7 @@ class ScrabbleBoard:
                 else:
                     v_col += 1
 
-            result = self.checkAllWordsOnBoard(virtual_board, None)
+            result = self.check_all_words_on_board(virtual_board, None)
             if result:
                 score = result['score']
                 if score > self.highest_score:
@@ -950,17 +950,17 @@ def renove_items_from_list(list_1, list_2):
 
 
 
-def getPlacedLettersRowsAndCols(virtual_board, tempBoardValues):
+def get_placed_letters_rows_and_cols(virtual_board, tempBoardValues):
     rows = []
     cols = []
     for i in range(BOARD_SIZE):
         for j in range(BOARD_SIZE):
-            if (getTempLetterOnVirtualBoard(i, j, virtual_board)):
+            if (get_temp_letter_on_virtual_board(i, j, virtual_board)):
                 if i not in rows:
                     rows.append(i)
                 if j not in cols:
                     cols.append(j)
-            if (getTempLetterAtCoordinate(i, j, tempBoardValues)):
+            if (get_temp_letter_at_coordinate(i, j, tempBoardValues)):
                 if i not in rows:
                     rows.append(i)
                 if j not in cols:
@@ -969,7 +969,7 @@ def getPlacedLettersRowsAndCols(virtual_board, tempBoardValues):
     return {'rows': rows, 'cols': cols}
 
 
-def getTempLetterOnVirtualBoard(x, y, virtual_board):
+def get_temp_letter_on_virtual_board(x, y, virtual_board):
     if not is_on_board(x, y):
         return None
     if not virtual_board:
@@ -979,7 +979,7 @@ def getTempLetterOnVirtualBoard(x, y, virtual_board):
     return virtual_board[x][y] if is_on_board(x, y) else None
 
 
-def getTempLetterAtCoordinate(x, y, tempBoardValues):
+def get_temp_letter_at_coordinate(x, y, tempBoardValues):
     if not tempBoardValues:
         return
     return tempBoardValues[x][y] if is_on_board(x, y) else None
@@ -991,25 +991,25 @@ def is_on_board(x, y):
 
 
 
-def getSpecialTileScoreIdx(i, j):
-    ti = toTileIndex(i, j)
+def get_special_tile_score_idx(i, j):
+    ti = to_tile_index(i, j)
     for t in tileScoreIdx:
         if ti in tileScoreIdx[t]:
             return t
     return ''
 
 
-def toTileIndex(row, column):
+def to_tile_index(row, column):
     if row < BOARD_SIZE and row >= 0 and column < BOARD_SIZE and column >= 0:
         return row * BOARD_SIZE + column
     else:
         return -1
 
-def getAllTempLetters (virtual_board, tempBoardValues):
+def get_all_temp_letters (virtual_board, tempBoardValues):
     letters = []
     for i in range(BOARD_SIZE):
         for j in range(BOARD_SIZE):
-            letter = getTempLetterOnVirtualBoard(i, j, virtual_board) or getTempLetterAtCoordinate(i, j, tempBoardValues)
+            letter = get_temp_letter_on_virtual_board(i, j, virtual_board) or get_temp_letter_at_coordinate(i, j, tempBoardValues)
             if (letter):
                 letters.append(letter)
 
