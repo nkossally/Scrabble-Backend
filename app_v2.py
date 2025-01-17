@@ -32,49 +32,48 @@ def start_game():
     player_hand = game.get_player_hand()
     tiles = game.get_tiles()
 
+    # for key in r.scan_iter("prefix:*"):
+    #     print("deleting key")
+    #     print(key)
+    #     r.delete(key)
+
+    # r.flushall()
+
+    # key = str(uuid.uuid4())
     key = "game"
 
-    pickled_root = pickle.dumps(root)
+    pickled_game = pickle.dumps(game)
     # set Redis key to expire in 30 minutes
-    r.set(key, pickled_root, ex=18000)
+    r.set(key, pickled_game, ex=18000)
 
-    return { 'player_hand': player_hand, 'computer_hand': computer_hand, 'tiles': tiles, 'key': key }
+    return {'player_hand': player_hand, 'computer_hand': computer_hand, 'tiles': tiles, 'key': key}
 
 @app.route('/get-computer-first-move')
 def computer_make_start_move():
     key = request.args.get('key') 
     key = "game"
 
-    root = pickle.loads(r.get(key))
-   
-    game = ScrabbleBoard(root)
+    game = pickle.loads(r.get(key))
 
     result = game.get_start_move()
+   
+    pickled_game = pickle.dumps(game)
+    r.set(key, pickled_game, ex=18000)
 
     game.print_board()
     return result
 
-@app.route('/get-best-move', methods = ['POST'])
+@app.route('/get-best-move')
 def get_best_move():
-    request_data = request.get_json()
-    key = request_data['key']
+    key = request.args.get('key') 
     key = "game"
-    board_values = request_data["board_values"]
-    hand = request_data["hand"]
-    computer_hand = request_data["computer_hand"]
-    tile_bag = request_data["tile_bag"]
 
-    print(board_values)
-
-    root = pickle.loads(r.get(key))
-    game = ScrabbleBoard(root)
-
-    game.insert_board_values(board_values)
-    game.set_computer_hand(computer_hand)
-    game.set_player_hand(hand)
-    game.set_tile_bag(tile_bag)
+    game = pickle.loads(r.get(key))
 
     result = game.get_move()
+
+    pickled_game = pickle.dumps(game)
+    r.set(key, pickled_game, ex=18000)
 
     game.print_board()
     return result
@@ -89,21 +88,13 @@ def insert_tiles():
     start_row = request_data['start_row']
     start_col = request_data['start_col']
     is_vertical = request_data['is_vertical']
-    board_values = request_data["board_values"]
-    hand = request_data["hand"]
-    computer_hand = request_data["computer_hand"]
-    tile_bag = request_data["tile_bag"]
 
-    root = pickle.loads(r.get(key))
-    game = ScrabbleBoard(root)
-
-    game.insert_board_values(board_values)
-    game.set_computer_hand(computer_hand)
-    game.set_player_hand(hand)
-    game.set_tile_bag(tile_bag)
-
+    game = pickle.loads(r.get(key))
     result = game.insert_letters(tiles, max_word, start_row, start_col, is_vertical)
     game.print_board()
+
+    pickled_game = pickle.dumps(game)
+    r.set(key, pickled_game, ex=18000)
 
     return result
 
@@ -112,23 +103,15 @@ def dump_letters():
     request_data = request.get_json()
     key = request_data['key']
     key = "game"
+    game = pickle.loads(r.get(key))
 
-    board_values = request_data["board_values"]
-    hand = request_data["hand"]
-    computer_hand = request_data["computer_hand"]
-    tile_bag = request_data["tile_bag"]
 
-    root = pickle.loads(r.get(key))
-    game = ScrabbleBoard(root)
-
-    game.insert_board_values(board_values)
-    game.set_computer_hand(computer_hand)
-    game.set_player_hand(hand)
-    game.set_tile_bag(tile_bag)
-
+    request_data = request.get_json()
     letters = request_data['letters']
-    
     result = game.dump_letters(letters)
     game.print_board()
+
+    pickled_game = pickle.dumps(game)
+    r.set(key, pickled_game, ex=18000)
 
     return result

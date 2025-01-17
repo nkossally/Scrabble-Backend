@@ -869,6 +869,24 @@ class ScrabbleBoard:
 
         return {'letterPoints': letterPoints, 'wordMultiplier': wordMultiplier}
     
+    def insert_board_values (self, board_values):
+        for i in range(len(board_values)):
+            for j in range(len(board_values[i])):
+                if(board_values[i][j]):
+                    self.insert_letter(i, j, board_values[i][j])
+
+    def insert_letter (self, row, col, letter):
+        self.board[row][col].letter = letter
+    
+    def set_computer_hand (self, computer_hand):
+        self.computer_word_rack = computer_hand
+
+    def set_player_hand (self, player_hand):
+        self.player_word_rack = player_hand
+
+    def set_tile_bag (self, tile_bag):
+        self.tile_bag = tile_bag
+
     def get_move(self):
         self.best_word = ''
         self.highest_score = 0
@@ -1014,3 +1032,5 @@ def get_all_temp_letters (virtual_board, tempBoardValues):
                 letters.append(letter)
 
     return letters
+
+
