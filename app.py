@@ -9,9 +9,9 @@ from dawg import build_dawg, build_trie
 app = Flask(__name__)
 CORS(app)
 r = redis.Redis(
-    host='redis-19746.c16.us-east-1-2.ec2.redns.redis-cloud.com',
-    port=19746,
-    password='iUEA7AvNltZ8138nIYl9dCepAfLl7pxz')
+    host='redis-12426.c275.us-east-1-4.ec2.redns.redis-cloud.com',
+    port=12426,
+    password='EOde9z4DNswjnXTvph1MIS3rDeSHXkK8')
 # r = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 @app.route('/')
@@ -42,7 +42,6 @@ def start_game():
 
 @app.route('/get-computer-first-move')
 def computer_make_start_move():
-    key = request.args.get('key') 
     key = "game"
 
     root = pickle.loads(r.get(key))
@@ -57,7 +56,6 @@ def computer_make_start_move():
 @app.route('/get-best-move', methods = ['POST'])
 def get_best_move():
     request_data = request.get_json()
-    key = request_data['key']
     key = "game"
     board_values = request_data["board_values"]
     hand = request_data["hand"]
@@ -83,7 +81,6 @@ def get_best_move():
 def insert_tiles():
     request_data = request.get_json()
     tiles = request_data['letters_and_coordinates']
-    key = request_data['key']
     key = "game"
     max_word = request_data['max_word']
     start_row = request_data['start_row']
@@ -110,7 +107,6 @@ def insert_tiles():
 @app.route('/dump-letters', methods = ['POST'])
 def dump_letters():
     request_data = request.get_json()
-    key = request_data['key']
     key = "game"
 
     board_values = request_data["board_values"]
@@ -127,7 +123,7 @@ def dump_letters():
     game.set_tile_bag(tile_bag)
 
     letters = request_data['letters']
-    
+
     result = game.dump_letters(letters)
     game.print_board()
 
